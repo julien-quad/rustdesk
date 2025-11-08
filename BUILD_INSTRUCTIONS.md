@@ -40,6 +40,9 @@ cargo --version
 brew install nasm yasm pkg-config cmake gcc wget
 brew install opus libvpx aom
 
+# Verify cmake is installed
+cmake --version  # Should show cmake version 3.x or higher
+
 # 4. Build and install libyuv from source (not available in Homebrew)
 cd /tmp
 git clone https://chromium.googlesource.com/libyuv/libyuv
@@ -263,6 +266,34 @@ python3 build.py --flutter
 ```
 
 **Note:** `libyuv` is NOT available via `brew install`. The warning "No available formula with the name 'libyuv'" is expected - you must build it from source as shown above.
+
+### "cmake: command not found" error (macOS)
+This error occurs when cmake is not installed or not in PATH.
+
+**Error message:**
+```
+zsh: command not found: cmake
+```
+
+**Solution:**
+Install cmake via Homebrew:
+```bash
+brew install cmake
+
+# Verify installation
+cmake --version
+
+# If the above doesn't work, try with arch prefix:
+arch -arm64 brew install cmake
+```
+
+Then continue with building libyuv:
+```bash
+cd /tmp/libyuv
+cmake . -DCMAKE_INSTALL_PREFIX=/opt/homebrew/Cellar/libyuv/1872
+make -j$(sysctl -n hw.ncpu)
+make install
+```
 
 ### "ni ceci ni aucun de ses répertoires parents n'est un dépôt git" error
 This error means you downloaded the code as a ZIP file instead of cloning with git.
