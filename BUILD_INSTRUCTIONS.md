@@ -2,6 +2,27 @@
 
 This guide provides instructions for building the customized RustDesk application for different platforms.
 
+## Quick Start (macOS)
+
+If you're building on macOS for the first time, follow these steps in order:
+
+```bash
+# 1. Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+# 2. Verify Rust installation
+cargo --version
+
+# 3. Initialize git submodules (CRITICAL!)
+git submodule update --init --recursive
+
+# 4. Build the application
+python3 build.py --flutter
+```
+
+For other platforms or detailed instructions, see sections below.
+
 ## Prerequisites
 
 ### All Platforms
@@ -25,6 +46,13 @@ Set the `VCPKG_ROOT` environment variable to your vcpkg installation directory.
 - Homebrew (recommended): `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
 ## Building
+
+**IMPORTANT: Before building on any platform, initialize git submodules:**
+```bash
+git submodule update --init --recursive
+```
+
+This step is required as RustDesk uses submodules for core libraries like `hbb_common`.
 
 ### Windows x64
 
@@ -71,6 +99,12 @@ Note: Cross-compilation for ARM64 on x64 Windows may require additional setup fo
    cargo --version  # Should show cargo 1.75 or newer
    rustc --version  # Should show rustc 1.75 or newer
    ```
+
+4. **Initialize git submodules (IMPORTANT):**
+   ```bash
+   git submodule update --init --recursive
+   ```
+   This step is crucial as RustDesk uses submodules for core libraries.
 
 **Build commands:**
 ```bash
@@ -138,6 +172,21 @@ cargo build --release --features flutter
 
 ## Troubleshooting
 
+### "failed to read `.../libs/hbb_common/Cargo.toml`" error
+This error occurs when git submodules haven't been initialized.
+
+**Solution:**
+```bash
+git submodule update --init --recursive
+```
+
+This must be done before building. The error message will look like:
+```
+failed to load manifest for dependency `hbb_common`
+Caused by: failed to read `/path/to/libs/hbb_common/Cargo.toml`
+Caused by: No such file or directory (os error 2)
+```
+
 ### "cargo: command not found" error
 This means Rust is not installed or not in your PATH.
 
@@ -174,8 +223,8 @@ rustup update
 rustc --version  # Should be 1.75 or newer
 ```
 
-### Submodule issues
-If you encounter submodule errors:
+### Other submodule issues
+If you encounter other submodule errors:
 ```bash
 git submodule update --init --recursive
 ```
