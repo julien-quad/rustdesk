@@ -5,7 +5,10 @@ This guide provides instructions for building the customized RustDesk applicatio
 ## Prerequisites
 
 ### All Platforms
-- Rust 1.75 or newer
+- **Rust 1.75 or newer** - Install from https://rustup.rs/
+  - On macOS/Linux: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+  - On Windows: Download and run rustup-init.exe
+  - After installation, restart your terminal or run: `source $HOME/.cargo/env` (macOS/Linux)
 - Git
 - Python 3
 - vcpkg (for C++ dependencies)
@@ -17,16 +20,17 @@ Set the `VCPKG_ROOT` environment variable to your vcpkg installation directory.
 - Windows SDK
 
 ### macOS
-- Xcode Command Line Tools
+- Xcode Command Line Tools: `xcode-select --install`
 - macOS 10.14 or newer
+- Homebrew (recommended): `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
 ## Building
 
 ### Windows x64
 
 ```bash
-# Install dependencies (first time only)
-python3 build.py --flutter --release
+# Build with Flutter (builds in release mode by default)
+python3 build.py --flutter
 
 # Or for Rust-only build
 cargo build --release --features flutter
@@ -50,11 +54,30 @@ Note: Cross-compilation for ARM64 on x64 Windows may require additional setup fo
 
 ### macOS
 
-```bash
-# Build for macOS
-python3 build.py --flutter --release
+**Prerequisites for macOS:**
+1. Install Rust if not already installed:
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   source $HOME/.cargo/env
+   ```
 
-# Or for specific architecture
+2. Install Xcode Command Line Tools if not already installed:
+   ```bash
+   xcode-select --install
+   ```
+
+3. Verify installations:
+   ```bash
+   cargo --version  # Should show cargo 1.75 or newer
+   rustc --version  # Should show rustc 1.75 or newer
+   ```
+
+**Build commands:**
+```bash
+# Build for macOS (builds in release mode by default)
+python3 build.py --flutter
+
+# Or for specific architecture using cargo directly
 cargo build --release --features flutter
 ```
 
@@ -75,22 +98,25 @@ lipo -create \
 
 ## Build Options
 
-### Features
+### build.py Options
 
 - `--flutter` - Build with Flutter UI (recommended)
-- `--release` - Build in release mode with optimizations
 - `--hwcodec` - Enable hardware video codec support
+- `--portable` - Build Windows portable version
+- `--skip-cargo` - Skip cargo build process (Flutter only, Linux only)
+
+**Note:** build.py builds in release mode by default. There is no `--release` flag.
 
 ### Examples
 
-**Full Flutter build with hardware codec:**
+**Flutter build with hardware codec:**
 ```bash
-python3 build.py --flutter --release --hwcodec
+python3 build.py --flutter --hwcodec
 ```
 
-**Desktop-only build:**
+**Cargo direct build with release mode:**
 ```bash
-cargo build --release
+cargo build --release --features flutter
 ```
 
 ## After Building
@@ -111,6 +137,29 @@ cargo build --release
 - Set proper bundle identifier: `fr.technic-informatique.assistance`
 
 ## Troubleshooting
+
+### "cargo: command not found" error
+This means Rust is not installed or not in your PATH.
+
+**Solution:**
+1. Install Rust:
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+2. Add cargo to your PATH (restart terminal or run):
+   ```bash
+   source $HOME/.cargo/env
+   ```
+3. Verify installation:
+   ```bash
+   cargo --version
+   ```
+
+### "unrecognized arguments: --release" with build.py
+The `build.py` script does not accept `--release` flag. It builds in release mode by default.
+
+**Solution:**
+Use `python3 build.py --flutter` instead of `python3 build.py --flutter --release`
 
 ### vcpkg errors
 Ensure `VCPKG_ROOT` is set and dependencies are installed:
