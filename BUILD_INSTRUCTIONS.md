@@ -1,0 +1,414 @@
+# Build Instructions for Technic informatique
+
+This guide provides instructions for building the customized RustDesk application for different platforms.
+
+## ⚠️ IMPORTANT: How to Download the Code
+
+**DO NOT download as ZIP!** You must clone the repository with git to get all submodules.
+
+### Correct Way to Download:
+
+```bash
+# Clone the repository with git
+git clone https://github.com/julien-quad/rustdesk.git
+cd rustdesk
+
+# Switch to the customization branch
+git checkout copilot/customize-rustdesk-for-technic-informatique
+
+# Initialize submodules (CRITICAL!)
+git submodule update --init --recursive
+```
+
+If you already downloaded as ZIP (error: "ni ceci ni aucun de ses répertoires parents n'est un dépôt git"), you must:
+1. Delete the downloaded folder
+2. Clone the repository using the commands above
+
+## Quick Start (macOS)
+
+If you're building on macOS for the first time, follow these steps in order:
+
+```bash
+# 1. Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+# 2. Verify Rust installation
+cargo --version
+
+# 3. Install C++ dependencies via Homebrew
+brew install nasm yasm pkg-config cmake gcc wget
+brew install opus libvpx aom
+
+# Verify cmake is installed
+cmake --version  # Should show cmake version 3.x or higher
+
+# 4. Build and install libyuv from source (not available in Homebrew)
+cd /tmp
+git clone https://chromium.googlesource.com/libyuv/libyuv
+cd libyuv
+mkdir -p /opt/homebrew/Cellar/libyuv/1872
+cmake . -DCMAKE_INSTALL_PREFIX=/opt/homebrew/Cellar/libyuv/1872
+make -j$(sysctl -n hw.ncpu)
+make install
+
+# 5. Clone the repository
+cd ~/Downloads  # or your preferred location
+git clone https://github.com/julien-quad/rustdesk.git
+cd rustdesk
+git checkout copilot/customize-rustdesk-for-technic-informatique
+
+# 6. Initialize git submodules (CRITICAL!)
+git submodule update --init --recursive
+
+# 7. Apply custom password patch (REQUIRED!)
+./apply_password_patch.sh
+
+# 8. Build the application
+python3 build.py --flutter
+```
+
+For other platforms or detailed instructions, see sections below.
+
+## Prerequisites
+
+### All Platforms
+- **Rust 1.75 or newer** - Install from https://rustup.rs/
+  - On macOS/Linux: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+  - On Windows: Download and run rustup-init.exe
+  - After installation, restart your terminal or run: `source $HOME/.cargo/env` (macOS/Linux)
+- Git
+- Python 3
+- vcpkg (for C++ dependencies)
+
+Set the `VCPKG_ROOT` environment variable to your vcpkg installation directory.
+
+### Windows
+- Visual Studio 2019 or newer with C++ build tools
+- Windows SDK
+
+### macOS
+- Xcode Command Line Tools: `xcode-select --install`
+- macOS 10.14 or newer
+- Homebrew: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+- **Required C++ dependencies:**
+  ```bash
+  # Install via Homebrew
+  brew install nasm yasm pkg-config cmake gcc wget
+  brew install opus libvpx aom
+  
+  # Build libyuv from source (not available in Homebrew)
+  cd /tmp
+  git clone https://chromium.googlesource.com/libyuv/libyuv
+  cd libyuv
+  mkdir -p /opt/homebrew/Cellar/libyuv/1872
+  cmake . -DCMAKE_INSTALL_PREFIX=/opt/homebrew/Cellar/libyuv/1872
+  make -j$(sysctl -n hw.ncpu)
+  make install
+  ```
+
+## Building
+
+**IMPORTANT: Before building on any platform:**
+1. Initialize git submodules:
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+2. Apply the custom password patch:
+   - **macOS/Linux:** `./apply_password_patch.sh`
+   - **Windows:** `apply_password_patch.bat` (follow instructions)
+
+These steps are required as RustDesk uses submodules for core libraries and the password customization is applied after submodule init.
+
+### Windows x64
+
+```bash
+# After initializing submodules and applying patch:
+python3 build.py --flutter
+
+# Or for Rust-only build
+cargo build --release --features flutter
+```
+
+The executable will be located at:
+- `target/release/rustdesk.exe` (Rust binary)
+- Flutter build output in `flutter/build/windows/runner/Release/`
+
+### Windows ARM64
+
+```bash
+# Install ARM64 target (first time only)
+rustup target add aarch64-pc-windows-msvc
+
+# Build for ARM64
+cargo build --release --target aarch64-pc-windows-msvc --features flutter
+```
+
+Note: Cross-compilation for ARM64 on x64 Windows may require additional setup for C++ dependencies.
+
+### macOS
+
+**Prerequisites for macOS:**
+1. Install Rust if not already installed:
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   source $HOME/.cargo/env
+   ```
+
+2. Install Xcode Command Line Tools if not already installed:
+   ```bash
+   xcode-select --install
+   ```
+
+3. Verify installations:
+   ```bash
+   cargo --version  # Should show cargo 1.75 or newer
+   rustc --version  # Should show rustc 1.75 or newer
+   ```
+
+4. **Initialize git submodules (IMPORTANT):**
+   ```bash
+   git submodule update --init --recursive
+   ```
+   This step is crucial as RustDesk uses submodules for core libraries.
+
+**Build commands:**
+```bash
+# Build for macOS (builds in release mode by default)
+python3 build.py --flutter
+
+# Or for specific architecture using cargo directly
+cargo build --release --features flutter
+```
+
+The app bundle will be in `flutter/build/macos/Build/Products/Release/`
+
+For universal binary (x86_64 + ARM64):
+```bash
+# Build for both architectures
+cargo build --release --target x86_64-apple-darwin --features flutter
+cargo build --release --target aarch64-apple-darwin --features flutter
+
+# Create universal binary with lipo
+lipo -create \
+  target/x86_64-apple-darwin/release/rustdesk \
+  target/aarch64-apple-darwin/release/rustdesk \
+  -output rustdesk-universal
+```
+
+## Build Options
+
+### build.py Options
+
+- `--flutter` - Build with Flutter UI (recommended)
+- `--hwcodec` - Enable hardware video codec support
+- `--portable` - Build Windows portable version
+- `--skip-cargo` - Skip cargo build process (Flutter only, Linux only)
+
+**Note:** build.py builds in release mode by default. There is no `--release` flag.
+
+### Examples
+
+**Flutter build with hardware codec:**
+```bash
+python3 build.py --flutter --hwcodec
+```
+
+**Cargo direct build with release mode:**
+```bash
+cargo build --release --features flutter
+```
+
+## After Building
+
+1. **Test the application** to ensure branding and password are correct
+2. **Replace icons** as documented in BRANDING_CUSTOMIZATION.md
+3. **Package for distribution**
+
+## Platform-Specific Notes
+
+### Windows
+- The build requires C++ dependencies (libvpx, libyuv, opus, aom) via vcpkg
+- Hardware codec support requires additional Windows SDK components
+
+### macOS
+- App must be signed for distribution
+- Notarization required for distribution outside Mac App Store
+- Set proper bundle identifier: `fr.technic-informatique.assistance`
+
+## Troubleshooting
+
+### "Could not find package in /opt/homebrew/Cellar/libyuv" error (macOS)
+This error occurs because `libyuv` is not available as a Homebrew package and must be built from source.
+
+**Error message:**
+```
+Could not find package in /opt/homebrew/Cellar/libyuv. Make sure your homebrew and package libyuv are all installed.
+```
+
+**Solution:**
+Build and install libyuv from source:
+```bash
+cd /tmp
+git clone https://chromium.googlesource.com/libyuv/libyuv
+cd libyuv
+mkdir -p /opt/homebrew/Cellar/libyuv/1872
+cmake . -DCMAKE_INSTALL_PREFIX=/opt/homebrew/Cellar/libyuv/1872
+make -j$(sysctl -n hw.ncpu)
+make install
+```
+
+Then rebuild RustDesk:
+```bash
+cd ~/Downloads/rustdesk  # or wherever you cloned it
+python3 build.py --flutter
+```
+
+**Note:** `libyuv` is NOT available via `brew install`. The warning "No available formula with the name 'libyuv'" is expected - you must build it from source as shown above.
+
+### "cmake: command not found" error (macOS)
+This error occurs when cmake is not installed or not in PATH.
+
+**Error message:**
+```
+zsh: command not found: cmake
+```
+
+**Solution:**
+Install cmake via Homebrew:
+```bash
+brew install cmake
+
+# Verify installation
+cmake --version
+
+# If the above doesn't work, try with arch prefix:
+arch -arm64 brew install cmake
+```
+
+Then continue with building libyuv:
+```bash
+cd /tmp/libyuv
+cmake . -DCMAKE_INSTALL_PREFIX=/opt/homebrew/Cellar/libyuv/1872
+make -j$(sysctl -n hw.ncpu)
+make install
+```
+
+### "ni ceci ni aucun de ses répertoires parents n'est un dépôt git" error
+This error means you downloaded the code as a ZIP file instead of cloning with git.
+
+**Error message:**
+```
+fatal: ni ceci ni aucun de ses répertoires parents n'est un dépôt git: .git
+```
+
+**Solution:**
+1. Delete the current folder
+2. Clone the repository properly:
+   ```bash
+   git clone https://github.com/julien-quad/rustdesk.git
+   cd rustdesk
+   git checkout copilot/customize-rustdesk-for-technic-informatique
+   git submodule update --init --recursive
+   ```
+
+**Why this happens:** The code includes git submodules (external libraries) that are only downloaded when you clone with git. Downloading as ZIP doesn't include these submodules.
+
+### "failed to read `.../libs/hbb_common/Cargo.toml`" error
+This error occurs when git submodules haven't been initialized.
+
+**Solution:**
+```bash
+git submodule update --init --recursive
+```
+
+This must be done before building. The error message will look like:
+```
+failed to load manifest for dependency `hbb_common`
+Caused by: failed to read `/path/to/libs/hbb_common/Cargo.toml`
+Caused by: No such file or directory (os error 2)
+```
+
+### "cargo: command not found" error
+This means Rust is not installed or not in your PATH.
+
+**Solution:**
+1. Install Rust:
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+2. Add cargo to your PATH (restart terminal or run):
+   ```bash
+   source $HOME/.cargo/env
+   ```
+3. Verify installation:
+   ```bash
+   cargo --version
+   ```
+
+### "unrecognized arguments: --release" with build.py
+The `build.py` script does not accept `--release` flag. It builds in release mode by default.
+
+**Solution:**
+Use `python3 build.py --flutter` instead of `python3 build.py --flutter --release`
+
+### vcpkg errors
+Ensure `VCPKG_ROOT` is set and dependencies are installed:
+```bash
+vcpkg install libvpx libyuv opus aom
+```
+
+### Rust toolchain issues
+Update Rust to the minimum required version:
+```bash
+rustup update
+rustc --version  # Should be 1.75 or newer
+```
+
+### Other submodule issues
+If you encounter other submodule errors:
+```bash
+git submodule update --init --recursive
+```
+
+### Build script errors
+Ensure Python 3 is installed and in PATH:
+```bash
+python3 --version
+```
+
+## Distribution
+
+### Windows
+Create an installer using:
+- NSIS installer: See `res/msi/` directory
+- MSI installer: Windows Installer XML (WiX) toolset
+
+### macOS
+Create a DMG for distribution:
+```bash
+# After building, create DMG
+hdiutil create -volname "Assistance Technic informatique" \
+  -srcfolder flutter/build/macos/Build/Products/Release/Assistance\ Technic\ informatique.app \
+  -ov -format UDZO AssistanceTechnicInformatique.dmg
+```
+
+## Verification
+
+After building, verify:
+
+1. **Application name** appears as "Assistance Technic informatique"
+2. **Default permanent password** is `&aqw1AQW` (check in Security settings)
+3. **Branding** shows "Technic informatique" in UI strings
+4. **Icons** are replaced (if you've followed BRANDING_CUSTOMIZATION.md)
+
+## Support
+
+For build issues specific to this customization:
+- Website: https://technic-informatique.fr
+- Email: contact@technic-informatique.fr
+
+For general RustDesk build issues:
+- Original project: https://github.com/rustdesk/rustdesk
+- Documentation: https://rustdesk.com/docs/
