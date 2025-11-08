@@ -2,6 +2,28 @@
 
 This guide provides instructions for building the customized RustDesk application for different platforms.
 
+## ⚠️ IMPORTANT: How to Download the Code
+
+**DO NOT download as ZIP!** You must clone the repository with git to get all submodules.
+
+### Correct Way to Download:
+
+```bash
+# Clone the repository with git
+git clone https://github.com/julien-quad/rustdesk.git
+cd rustdesk
+
+# Switch to the customization branch
+git checkout copilot/customize-rustdesk-for-technic-informatique
+
+# Initialize submodules (CRITICAL!)
+git submodule update --init --recursive
+```
+
+If you already downloaded as ZIP (error: "ni ceci ni aucun de ses répertoires parents n'est un dépôt git"), you must:
+1. Delete the downloaded folder
+2. Clone the repository using the commands above
+
 ## Quick Start (macOS)
 
 If you're building on macOS for the first time, follow these steps in order:
@@ -14,10 +36,15 @@ source $HOME/.cargo/env
 # 2. Verify Rust installation
 cargo --version
 
-# 3. Initialize git submodules (CRITICAL!)
+# 3. Clone the repository (if not done already)
+git clone https://github.com/julien-quad/rustdesk.git
+cd rustdesk
+git checkout copilot/customize-rustdesk-for-technic-informatique
+
+# 4. Initialize git submodules (CRITICAL!)
 git submodule update --init --recursive
 
-# 4. Build the application
+# 5. Build the application
 python3 build.py --flutter
 ```
 
@@ -171,6 +198,26 @@ cargo build --release --features flutter
 - Set proper bundle identifier: `fr.technic-informatique.assistance`
 
 ## Troubleshooting
+
+### "ni ceci ni aucun de ses répertoires parents n'est un dépôt git" error
+This error means you downloaded the code as a ZIP file instead of cloning with git.
+
+**Error message:**
+```
+fatal: ni ceci ni aucun de ses répertoires parents n'est un dépôt git: .git
+```
+
+**Solution:**
+1. Delete the current folder
+2. Clone the repository properly:
+   ```bash
+   git clone https://github.com/julien-quad/rustdesk.git
+   cd rustdesk
+   git checkout copilot/customize-rustdesk-for-technic-informatique
+   git submodule update --init --recursive
+   ```
+
+**Why this happens:** The code includes git submodules (external libraries) that are only downloaded when you clone with git. Downloading as ZIP doesn't include these submodules.
 
 ### "failed to read `.../libs/hbb_common/Cargo.toml`" error
 This error occurs when git submodules haven't been initialized.
