@@ -44,7 +44,10 @@ git checkout copilot/customize-rustdesk-for-technic-informatique
 # 4. Initialize git submodules (CRITICAL!)
 git submodule update --init --recursive
 
-# 5. Build the application
+# 5. Apply custom password patch (REQUIRED!)
+./apply_password_patch.sh
+
+# 6. Build the application
 python3 build.py --flutter
 ```
 
@@ -74,17 +77,22 @@ Set the `VCPKG_ROOT` environment variable to your vcpkg installation directory.
 
 ## Building
 
-**IMPORTANT: Before building on any platform, initialize git submodules:**
-```bash
-git submodule update --init --recursive
-```
+**IMPORTANT: Before building on any platform:**
+1. Initialize git submodules:
+   ```bash
+   git submodule update --init --recursive
+   ```
 
-This step is required as RustDesk uses submodules for core libraries like `hbb_common`.
+2. Apply the custom password patch:
+   - **macOS/Linux:** `./apply_password_patch.sh`
+   - **Windows:** `apply_password_patch.bat` (follow instructions)
+
+These steps are required as RustDesk uses submodules for core libraries and the password customization is applied after submodule init.
 
 ### Windows x64
 
 ```bash
-# Build with Flutter (builds in release mode by default)
+# After initializing submodules and applying patch:
 python3 build.py --flutter
 
 # Or for Rust-only build
