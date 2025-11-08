@@ -36,18 +36,22 @@ source $HOME/.cargo/env
 # 2. Verify Rust installation
 cargo --version
 
-# 3. Clone the repository (if not done already)
+# 3. Install C++ dependencies via Homebrew
+brew install nasm yasm pkg-config cmake gcc wget
+brew install libyuv opus libvpx aom
+
+# 4. Clone the repository (if not done already)
 git clone https://github.com/julien-quad/rustdesk.git
 cd rustdesk
 git checkout copilot/customize-rustdesk-for-technic-informatique
 
-# 4. Initialize git submodules (CRITICAL!)
+# 5. Initialize git submodules (CRITICAL!)
 git submodule update --init --recursive
 
-# 5. Apply custom password patch (REQUIRED!)
+# 6. Apply custom password patch (REQUIRED!)
 ./apply_password_patch.sh
 
-# 6. Build the application
+# 7. Build the application
 python3 build.py --flutter
 ```
 
@@ -73,7 +77,12 @@ Set the `VCPKG_ROOT` environment variable to your vcpkg installation directory.
 ### macOS
 - Xcode Command Line Tools: `xcode-select --install`
 - macOS 10.14 or newer
-- Homebrew (recommended): `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+- Homebrew: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+- **Required C++ dependencies via Homebrew:**
+  ```bash
+  brew install nasm yasm pkg-config cmake gcc wget
+  brew install libyuv opus libvpx aom
+  ```
 
 ## Building
 
@@ -206,6 +215,26 @@ cargo build --release --features flutter
 - Set proper bundle identifier: `fr.technic-informatique.assistance`
 
 ## Troubleshooting
+
+### "Could not find package in /opt/homebrew/Cellar/libyuv" error (macOS)
+This error means required C++ dependencies are not installed via Homebrew.
+
+**Error message:**
+```
+Could not find package in /opt/homebrew/Cellar/libyuv. Make sure your homebrew and package libyuv are all installed.
+```
+
+**Solution:**
+Install the required dependencies via Homebrew:
+```bash
+brew install nasm yasm pkg-config cmake gcc wget
+brew install libyuv opus libvpx aom
+```
+
+If you get "already installed" messages, you may need to link them:
+```bash
+brew link libyuv opus libvpx aom
+```
 
 ### "ni ceci ni aucun de ses répertoires parents n'est un dépôt git" error
 This error means you downloaded the code as a ZIP file instead of cloning with git.
