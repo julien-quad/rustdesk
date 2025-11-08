@@ -1,0 +1,173 @@
+# Build Instructions for Technic informatique
+
+This guide provides instructions for building the customized RustDesk application for different platforms.
+
+## Prerequisites
+
+### All Platforms
+- Rust 1.75 or newer
+- Git
+- Python 3
+- vcpkg (for C++ dependencies)
+
+Set the `VCPKG_ROOT` environment variable to your vcpkg installation directory.
+
+### Windows
+- Visual Studio 2019 or newer with C++ build tools
+- Windows SDK
+
+### macOS
+- Xcode Command Line Tools
+- macOS 10.14 or newer
+
+## Building
+
+### Windows x64
+
+```bash
+# Install dependencies (first time only)
+python3 build.py --flutter --release
+
+# Or for Rust-only build
+cargo build --release --features flutter
+```
+
+The executable will be located at:
+- `target/release/rustdesk.exe` (Rust binary)
+- Flutter build output in `flutter/build/windows/runner/Release/`
+
+### Windows ARM64
+
+```bash
+# Install ARM64 target (first time only)
+rustup target add aarch64-pc-windows-msvc
+
+# Build for ARM64
+cargo build --release --target aarch64-pc-windows-msvc --features flutter
+```
+
+Note: Cross-compilation for ARM64 on x64 Windows may require additional setup for C++ dependencies.
+
+### macOS
+
+```bash
+# Build for macOS
+python3 build.py --flutter --release
+
+# Or for specific architecture
+cargo build --release --features flutter
+```
+
+The app bundle will be in `flutter/build/macos/Build/Products/Release/`
+
+For universal binary (x86_64 + ARM64):
+```bash
+# Build for both architectures
+cargo build --release --target x86_64-apple-darwin --features flutter
+cargo build --release --target aarch64-apple-darwin --features flutter
+
+# Create universal binary with lipo
+lipo -create \
+  target/x86_64-apple-darwin/release/rustdesk \
+  target/aarch64-apple-darwin/release/rustdesk \
+  -output rustdesk-universal
+```
+
+## Build Options
+
+### Features
+
+- `--flutter` - Build with Flutter UI (recommended)
+- `--release` - Build in release mode with optimizations
+- `--hwcodec` - Enable hardware video codec support
+
+### Examples
+
+**Full Flutter build with hardware codec:**
+```bash
+python3 build.py --flutter --release --hwcodec
+```
+
+**Desktop-only build:**
+```bash
+cargo build --release
+```
+
+## After Building
+
+1. **Test the application** to ensure branding and password are correct
+2. **Replace icons** as documented in BRANDING_CUSTOMIZATION.md
+3. **Package for distribution**
+
+## Platform-Specific Notes
+
+### Windows
+- The build requires C++ dependencies (libvpx, libyuv, opus, aom) via vcpkg
+- Hardware codec support requires additional Windows SDK components
+
+### macOS
+- App must be signed for distribution
+- Notarization required for distribution outside Mac App Store
+- Set proper bundle identifier: `fr.technic-informatique.assistance`
+
+## Troubleshooting
+
+### vcpkg errors
+Ensure `VCPKG_ROOT` is set and dependencies are installed:
+```bash
+vcpkg install libvpx libyuv opus aom
+```
+
+### Rust toolchain issues
+Update Rust to the minimum required version:
+```bash
+rustup update
+rustc --version  # Should be 1.75 or newer
+```
+
+### Submodule issues
+If you encounter submodule errors:
+```bash
+git submodule update --init --recursive
+```
+
+### Build script errors
+Ensure Python 3 is installed and in PATH:
+```bash
+python3 --version
+```
+
+## Distribution
+
+### Windows
+Create an installer using:
+- NSIS installer: See `res/msi/` directory
+- MSI installer: Windows Installer XML (WiX) toolset
+
+### macOS
+Create a DMG for distribution:
+```bash
+# After building, create DMG
+hdiutil create -volname "Assistance Technic informatique" \
+  -srcfolder flutter/build/macos/Build/Products/Release/Assistance\ Technic\ informatique.app \
+  -ov -format UDZO AssistanceTechnicInformatique.dmg
+```
+
+## Verification
+
+After building, verify:
+
+1. **Application name** appears as "Assistance Technic informatique"
+2. **Default permanent password** is `&aqw1AQW` (check in Security settings)
+3. **Branding** shows "Technic informatique" in UI strings
+4. **Icons** are replaced (if you've followed BRANDING_CUSTOMIZATION.md)
+
+## Support
+
+For build issues specific to this customization:
+- Website: https://technic-informatique.fr
+- Email: contact@technic-informatique.fr
+
+For general RustDesk build issues:
+- Original project: https://github.com/rustdesk/rustdesk
+- Documentation: https://rustdesk.com/docs/
