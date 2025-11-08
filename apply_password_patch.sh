@@ -20,24 +20,27 @@ if grep -q "Custom default permanent password for Technic informatique" "$CONFIG
 fi
 
 # Apply the patch
-# Find the get_permanent_password function and add the default password
-sed -i.bak '/pub fn get_permanent_password() -> String {/,/^    }$/ {
-    /^    }$/ i\
-        // Custom default permanent password for Technic informatique\
-        if password.is_empty() {\
-            password = "&aqw1AQW".to_string();\
-        }
-}' "$CONFIG_FILE"
+# Find the line with just "password" (return statement) and add semicolon + default password logic
+awk '
+/pub fn get_permanent_password\(\) -> String \{/ { in_func=1 }
+in_func && /^[[:space:]]*password[[:space:]]*$/ {
+    print "    password;";
+    print "    // Custom default permanent password for Technic informatique";
+    print "    if password.is_empty() {";
+    print "        password = \"&aqw1AQW\".to_string();";
+    print "    }";
+    in_func=0;
+    next;
+}
+{ print }
+' "$CONFIG_FILE" > "${CONFIG_FILE}.new"
 
-if [ $? -eq 0 ]; then
+if [ $? -eq 0 ] && [ -s "${CONFIG_FILE}.new" ]; then
+    mv "${CONFIG_FILE}.new" "$CONFIG_FILE"
     echo "✓ Patch applied successfully!"
     echo "✓ Default permanent password set to: &aqw1AQW"
-    rm -f "${CONFIG_FILE}.bak"
 else
     echo "✗ Failed to apply patch"
-    if [ -f "${CONFIG_FILE}.bak" ]; then
-        mv "${CONFIG_FILE}.bak" "$CONFIG_FILE"
-        echo "  Restored original file"
-    fi
+    rm -f "${CONFIG_FILE}.new"
     exit 1
 fi
