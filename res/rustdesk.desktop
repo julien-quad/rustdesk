@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=RustDesk
+Name=Assistance Technic informatique
 GenericName=Remote Desktop
 Comment=Remote Desktop
 Exec=rustdesk %u
